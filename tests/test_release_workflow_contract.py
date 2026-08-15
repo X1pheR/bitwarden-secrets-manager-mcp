@@ -26,3 +26,9 @@ def test_release_assets_still_publish_from_exact_verified_build() -> None:
     assert "sha256sum dist/*.whl dist/*.tar.gz" in WORKFLOW
     assert 'gh release create "${RELEASE_TAG}"' in WORKFLOW
     assert 'gh release upload "${RELEASE_TAG}"' in WORKFLOW
+
+
+def test_release_recovery_preserves_full_history_for_ancestry_check() -> None:
+    assert "git fetch origin main --depth=1" not in WORKFLOW
+    assert "git fetch origin main" in WORKFLOW
+    assert 'git merge-base --is-ancestor "${EXPECTED_SHA}" origin/main' in WORKFLOW
