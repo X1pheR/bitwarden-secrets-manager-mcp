@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up uv
+        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          version: "0.12.4"
+          python-version: "3.12"
+      - name: Require public repository and exact release source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.repository.private }}" = "false"
+          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "${GITHUB_REF_NAME}" = "v${version}"
+          git fetch origin main --depth=1
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+      - name: Verify exact tag
+        run: ./scripts/verify.sh
+      - name: Build reproducible release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          uv build --out-dir dist-a
+          uv build --out-dir dist-b
+          for artifact in dist-a/*; do
+            cmp "$artifact" "dist-b/$(basename "$artifact")"
+          done
+          mv dist-a dist
+          rm -rf dist-b
+          sha256sum dist/*.whl dist/*.tar.gz | sed 's#  dist/#  #' > SHA256SUMS
+      - name: Create draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" --draft --verify-tag --title "Bitwarden Secrets Manager MCP ${GITHUB_REF_NAME}" --generate-notes
+      - name: Attach release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${GITHUB_REF_NAME}" dist/*.whl dist/*.tar.gz SHA256SUMS
+      - name: Publish immutable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "${GITHUB_REF_NAME}" --draft=false

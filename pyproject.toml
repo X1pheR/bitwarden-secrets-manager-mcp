@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bitwarden-secrets-manager-mcp"
+version = "0.1.0"
+description = "A secure, value-blind Model Context Protocol server for Bitwarden Secrets Manager using the official Python SDK."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Ronald de Wit" }]
+keywords = ["bitwarden", "bitwarden-secrets-manager", "secrets-manager", "mcp", "model-context-protocol", "secrets-management"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
+  "Topic :: System :: Systems Administration",
+]
+dependencies = [
+  "bitwarden-sdk==2.1.0",
+  "mcp>=1.12.0,<2.0",
+  "pydantic>=2.10,<3.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=9.0.3,<10"]
+
+[project.scripts]
+bitwarden-secrets-manager-mcp = "bitwarden_secrets_manager_mcp:main"
+
+[project.urls]
+Repository = "https://github.com/X1pheR/bitwarden-secrets-manager-mcp"
+Issues = "https://github.com/X1pheR/bitwarden-secrets-manager-mcp/issues"
+Upstream = "https://github.com/bitwarden/sdk-sm"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bitwarden_secrets_manager_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

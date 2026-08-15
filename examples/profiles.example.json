@@ -1,0 +1,24 @@
+{
+  "profiles": {
+    "example": {
+      "access_token_file": "/run/secrets/bitwarden-sm-token",
+      "organization_id": "00000000-0000-4000-8000-000000000001",
+      "environment": "eu",
+      "expected_project_names": [
+        "Example Runtime"
+      ],
+      "allowed_input_directories": [
+        "/srv/secure/import"
+      ],
+      "allowed_output_directories": [
+        "/srv/runtime/secrets"
+      ],
+      "allow_secret_create": false,
+      "allow_secret_update": false,
+      "allow_secret_delete": false,
+      "allow_project_create": false,
+      "allow_project_update": false,
+      "allow_project_delete": false
+    }
+  }
+}

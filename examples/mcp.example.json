@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "bitwarden-secrets-manager": {
+      "command": "bitwarden-secrets-manager-mcp",
+      "env": {
+        "BITWARDEN_SM_PROFILES_FILE": "/absolute/path/to/profiles.json"
+      }
+    }
+  }
+}
