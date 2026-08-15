@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish"
+        required: true
+        type: string
+      expected_sha:
+        description: "Exact 40-character release source commit SHA"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,11 +22,15 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || github.sha }}
     steps:
-      - name: Check out source
+      - name: Check out exact release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
       - name: Set up uv
         uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
         with:
@@ -27,10 +41,17 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ github.event.repository.private }}" = "false"
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
           version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
-          test "${GITHUB_REF_NAME}" = "v${version}"
+          test "${RELEASE_TAG}" = "v${version}"
           git fetch origin main --depth=1
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
+          test "$(git rev-list -n1 "${RELEASE_TAG}")" = "${EXPECTED_SHA}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            test "${EXPECTED_SHA}" = "$(git rev-parse origin/main)"
+          else
+            git merge-base --is-ancestor "${EXPECTED_SHA}" origin/main
+          fi
       - name: Verify exact tag
         run: ./scripts/verify.sh
       - name: Build reproducible release artifacts
@@ -38,23 +59,26 @@ jobs:
         run: |
           set -euo pipefail
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
-          uv build --out-dir dist-a
-          uv build --out-dir dist-b
-          for artifact in dist-a/*; do
-            cmp "$artifact" "dist-b/$(basename "$artifact")"
+          release_work_dir="$(mktemp -d)"
+          trap 'rm -rf "$release_work_dir"' EXIT
+          uv build --out-dir "$release_work_dir/dist-a"
+          uv build --out-dir "$release_work_dir/dist-b"
+          for artifact in "$release_work_dir/dist-a/"*; do
+            cmp "$artifact" "$release_work_dir/dist-b/$(basename "$artifact")"
           done
-          mv dist-a dist
-          rm -rf dist-b
+          rm -rf dist
+          mkdir dist
+          cp "$release_work_dir/dist-a/"* dist/
           sha256sum dist/*.whl dist/*.tar.gz | sed 's#  dist/#  #' > SHA256SUMS
       - name: Create draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" --draft --verify-tag --title "Bitwarden Secrets Manager MCP ${GITHUB_REF_NAME}" --generate-notes
+        run: gh release create "${RELEASE_TAG}" --draft --verify-tag --title "Bitwarden Secrets Manager MCP ${RELEASE_TAG}" --generate-notes
       - name: Attach release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${GITHUB_REF_NAME}" dist/*.whl dist/*.tar.gz SHA256SUMS
+        run: gh release upload "${RELEASE_TAG}" dist/*.whl dist/*.tar.gz SHA256SUMS
       - name: Publish immutable GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release edit "${GITHUB_REF_NAME}" --draft=false
+        run: gh release edit "${RELEASE_TAG}" --draft=false
