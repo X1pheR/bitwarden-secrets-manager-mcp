@@ -123,3 +123,17 @@ def test_secret_resolution_by_key_is_exact_and_project_scoped(tmp_path: Path) ->
     resolved = provider.resolve_secret("SERVICE_TOKEN", str(PROJECT))
     assert resolved["id"] == str(SECRET)
     assert "value" not in resolved
+
+
+def test_secret_discovery_excludes_unassigned_or_unexpected_project_links(tmp_path: Path) -> None:
+    expected = SimpleNamespace(id=SECRET, key="EXPECTED", organization_id=ORG, project_ids=[PROJECT])
+    unassigned = SimpleNamespace(id=UUID("22222222-2222-4222-8222-222222222222"), key="UNASSIGNED", organization_id=ORG, project_ids=[])
+    unexpected = SimpleNamespace(id=UUID("33333333-3333-4333-8333-333333333333"), key="UNEXPECTED", organization_id=ORG, project_ids=[UUID("44444444-4444-4444-8444-444444444444")])
+
+    class ScopedSecrets(FakeSecrets):
+        def list(self, organization_id):
+            return response(SimpleNamespace(data=[expected, unassigned, unexpected]))
+
+    provider = SdkProvider(profile(tmp_path), client=FakeClient(secrets=ScopedSecrets()))
+    items = provider.list_secret_identifiers()
+    assert [item["key"] for item in items] == ["EXPECTED"]

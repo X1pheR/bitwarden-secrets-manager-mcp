@@ -115,3 +115,23 @@ def test_default_file_mode_rejects_executable_bits(tmp_path: Path, monkeypatch: 
     monkeypatch.setenv("BITWARDEN_SM_DEFAULT_FILE_MODE", "0650")
     with pytest.raises(ConfigurationError, match="executable"):
         Settings.from_env()
+
+
+def test_access_token_read_revalidates_file_descriptor_and_rejects_symlink_swap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    profile = _base(tmp_path)
+    settings = Settings.from_file(_profiles(tmp_path, profile))
+    selected = settings.profiles["test"]
+    target = Path(profile["access_token_file"])
+    replacement = tmp_path / "replacement-token"
+    _private(replacement, "replacement")
+    original_open = __import__("os").open
+
+    def swapping_open(path, flags, *args, **kwargs):
+        if Path(path) == target and not target.is_symlink():
+            target.unlink()
+            target.symlink_to(replacement)
+        return original_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr("bitwarden_secrets_manager_mcp.config.os.open", swapping_open)
+    with pytest.raises(ConfigurationError, match="opened safely"):
+        selected.read_access_token()

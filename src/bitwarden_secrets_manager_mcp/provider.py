@@ -125,16 +125,22 @@ class SdkProvider:
         return _project_metadata(self._response_data(response, "project get"))
 
     def list_secret_identifiers(self, project_id: str | None = None) -> list[dict[str, Any]]:
-        if project_id is not None:
-            self.assert_project_id(project_id)
-        else:
-            self.assert_expected_scope()
+        projects = self.assert_expected_scope()
+        allowed_project_ids = {item["id"] for item in projects}
+        if project_id is not None and project_id not in allowed_project_ids:
+            raise ProviderError(f"Bitwarden project is outside the exact scope for profile {self.profile.name}")
         response = self._call("secret list", lambda: self.client.secrets().list(str(self.profile.organization_id)))
         data = self._response_data(response, "secret list")
         items = [_secret_identifier_metadata(item) for item in data.data]
-        if project_id is not None:
-            items = [item for item in items if project_id in item["projectIds"]]
-        return items
+        scoped: list[dict[str, Any]] = []
+        for item in items:
+            linked = set(item["projectIds"])
+            if not linked or not linked.issubset(allowed_project_ids):
+                continue
+            if project_id is not None and project_id not in linked:
+                continue
+            scoped.append(item)
+        return scoped
 
     def resolve_secret(self, identifier: str, project_id: str | None = None) -> dict[str, Any]:
         items = self.list_secret_identifiers(project_id)

@@ -115,10 +115,28 @@ class ProfileSettings:
         return bool(self.allowed_output_directories)
 
     def read_access_token(self) -> str:
-        _assert_private_regular_file(self.access_token_file, label=f"Profile {self.name} access_token_file")
-        token = self.access_token_file.read_text(encoding="utf-8").strip()
+        label = f"Profile {self.name} access_token_file"
+        _assert_private_regular_file(self.access_token_file, label=label)
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        try:
+            fd = os.open(self.access_token_file, flags)
+        except OSError as exc:
+            raise ConfigurationError(f"{label} could not be opened safely") from exc
+        try:
+            info = os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode):
+                raise ConfigurationError(f"{label} must remain a regular file")
+            if stat.S_IMODE(info.st_mode) & 0o077:
+                raise ConfigurationError(f"{label} must remain private (0600 or stricter)")
+            try:
+                with os.fdopen(fd, "r", encoding="utf-8", closefd=False) as handle:
+                    token = handle.read().strip()
+            except UnicodeDecodeError as exc:
+                raise ConfigurationError(f"{label} must contain UTF-8 text") from exc
+        finally:
+            os.close(fd)
         if not token:
-            raise ConfigurationError(f"Profile {self.name} access_token_file is empty")
+            raise ConfigurationError(f"{label} is empty")
         return token
 
 
