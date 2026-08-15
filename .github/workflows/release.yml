@@ -44,7 +44,7 @@ jobs:
           [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
           version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
           test "${RELEASE_TAG}" = "v${version}"
-          git fetch origin main --depth=1
+          git fetch origin main
           test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
           test "$(git rev-list -n1 "${RELEASE_TAG}")" = "${EXPECTED_SHA}"
           if [ "${{ github.event_name }}" = "push" ]; then
