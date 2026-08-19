@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-Security fixes are applied to the current maintained release line and `main`. Before the first tag, `main` is the only supported development baseline.
+Security fixes are applied to the current maintained release line and `main`. The latest maintained release is the supported public baseline unless a release note states otherwise.
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a suspected vulnerability, leaked credential, or secret-handling defect. Use GitHub private vulnerability reporting when available. Otherwise contact the repository owner through the GitHub profile and request a private channel without posting exploit details or secret values publicly.
+Do not open a public issue for a suspected vulnerability, leaked credential, or secret-handling defect. Use [GitHub private vulnerability reporting](https://github.com/X1pheR/bitwarden-secrets-manager-mcp/security/advisories/new). If that channel is unexpectedly unavailable, contact the repository owner through the GitHub profile and request a private channel without posting exploit details or secret values publicly.
 
 Use synthetic data in reproduction steps. Never send real Machine Account tokens or production secret values in a report.
 
@@ -29,4 +29,4 @@ Bitwarden Machine Account permissions remain the underlying provider authorizati
 
 ## Dependency and code security
 
-The repository pins the Bitwarden SDK version used by the maintained product, locks Python dependencies, verifies source and package behavior in CI, and uses Dependabot. Public-release acceptance additionally reviews applicable GitHub-native dependency alerts, secret scanning/push protection, CodeQL results, repository history, and release immutability.
+The repository pins the Bitwarden SDK version used by the maintained product, locks Python dependencies, uses full-SHA-pinned GitHub Actions, verifies source and package behavior in CI, and uses Dependabot and OpenSSF Scorecard. Public-release acceptance additionally reviews applicable GitHub-native dependency alerts, secret scanning/push protection, CodeQL results, repository history, and release immutability.

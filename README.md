@@ -1,5 +1,7 @@
 # Bitwarden Secrets Manager MCP
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/X1pheR/bitwarden-secrets-manager-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/X1pheR/bitwarden-secrets-manager-mcp)
+
 A typed, value-blind [Model Context Protocol](https://modelcontextprotocol.io/) server for **Bitwarden Secrets Manager** built on the official Bitwarden Secrets Manager Python SDK.
 
 > **Scope:** this project manages Bitwarden Secrets Manager projects and secrets. It **does not manage Bitwarden Password Manager vaults, items, collections, or passwords**.
@@ -84,13 +86,21 @@ The public surface includes status/capability discovery, project metadata, secre
 
 See [`docs/tools.md`](docs/tools.md) for the complete tool contract and capability flags.
 
+## Feedback and contributions
+
+Use [GitHub Issues](https://github.com/X1pheR/bitwarden-secrets-manager-mcp/issues) for bug reports and feature requests and pull requests for proposed changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, test requirements, and change expectations. Security issues must follow the private process in [SECURITY.md](SECURITY.md).
+
+User-visible release changes are summarized in [CHANGELOG.md](CHANGELOG.md).
+
 ## Development
 
 ```bash
 ./scripts/verify.sh
 ```
 
-The verification script performs a locked dependency sync, compilation, the full test suite, source security checks, package builds, and a fresh wheel installation/import check.
+The verification script performs a locked dependency sync, compilation, the full test suite, source security checks, package builds, and a fresh wheel installation/import check. Dependabot maintains locked dependencies and pinned workflow dependencies within accepted compatibility ranges. OpenSSF Scorecard runs on `main` and weekly and publishes its public result for independent repository-security review.
+
+Normal development does not publish a release. An accepted strict SemVer tag (`vMAJOR.MINOR.PATCH`) triggers the release workflow, which verifies the exact tag/source/package version, reruns repository verification, proves two independent wheel/source builds are byte-identical, generates signed GitHub/Sigstore build provenance, creates a draft release, attaches artifacts plus `SHA256SUMS` and the provenance bundle, and only then publishes the release.
 
 ## Upstream relationship
 
