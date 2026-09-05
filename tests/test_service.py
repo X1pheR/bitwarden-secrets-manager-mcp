@@ -105,6 +105,26 @@ def test_complete_env_delivery_is_value_blind(tmp_path: Path) -> None:
     assert_value_blind(result)
 
 
+def test_generated_secret_is_created_internally_without_returning_value(tmp_path: Path) -> None:
+    service, provider, _, _ = setup(tmp_path)
+    result = service.secret_generate(
+        "test",
+        PROJECT,
+        "GENERATED_ADMIN",
+        length=48,
+        min_digits=2,
+        min_special=2,
+        avoid_ambiguous=True,
+    )
+    assert result["created"] is True
+    assert result["generated"] is True
+    assert result["policy"]["length"] == 48
+    assert provider.created_value is not None
+    assert len(provider.created_value) == 48
+    assert not (set(provider.created_value) & set("IOl01"))
+    assert provider.created_value not in json.dumps(result, sort_keys=True)
+
+
 def test_secret_mutations_read_values_only_from_protected_files(tmp_path: Path) -> None:
     service, provider, incoming, _ = setup(tmp_path)
     create = incoming / "create"

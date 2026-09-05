@@ -10,7 +10,7 @@ This is a community project and is not affiliated with or endorsed by Bitwarden.
 
 ## Why this server
 
-The server gives MCP clients useful Bitwarden Secrets Manager administration without turning secret values into model-visible data. It supports metadata discovery, controlled server-side file delivery, protected-file secret mutation, and guarded project administration through typed tools.
+The server gives MCP clients useful Bitwarden Secrets Manager administration without turning secret values into model-visible data. It supports metadata discovery, controlled server-side file delivery, value-blind generated-secret creation, protected-file secret mutation, and guarded project administration through typed tools.
 
 The provider implementation uses one path only: `bitwarden-sdk`. There is no generic provider command passthrough and no arbitrary process execution with injected secrets.
 
@@ -23,7 +23,7 @@ Secret values may exist briefly inside the server when Bitwarden returns them fo
 - server diagnostics and normal logs;
 - repository examples and CI configuration.
 
-Secret create/update reads values only from private regular files inside per-profile allowlisted input directories. File and env delivery writes only below allowlisted output directories. Administrative secret and project capabilities are profile-specific and disabled by default. Delete tools additionally require exact expected metadata and `confirm=true`.
+Secret create/update reads values only from private regular files inside per-profile allowlisted input directories, except the dedicated generator which creates a new secret from cryptographically secure server-side randomness without exposing the value. File and env delivery writes only below allowlisted output directories. Administrative secret and project capabilities are profile-specific and disabled by default. Delete tools additionally require exact expected metadata and `confirm=true`.
 
 There is no plaintext secret-value retrieval tool, generic SDK passthrough, arbitrary command runner, or bulk delete tool.
 
@@ -44,7 +44,7 @@ uv tool install bitwarden-secrets-manager-mcp
 or, after a release, directly from an immutable GitHub release wheel:
 
 ```bash
-uv tool install "https://github.com/X1pheR/bitwarden-secrets-manager-mcp/releases/download/v0.1.0/bitwarden_secrets_manager_mcp-0.1.0-py3-none-any.whl"
+uv tool install "https://github.com/X1pheR/bitwarden-secrets-manager-mcp/releases/download/v0.2.0/bitwarden_secrets_manager_mcp-0.2.0-py3-none-any.whl"
 ```
 
 A separate native Bitwarden command-line program is not required. The official Python SDK is installed as a package dependency.
@@ -82,7 +82,7 @@ See [`examples/profiles.example.json`](examples/profiles.example.json) and [`exa
 
 ## MCP tools
 
-The public surface includes status/capability discovery, project metadata, secret metadata, value-blind file/env delivery, protected-file secret create/update, exact secret delete, and guarded project create/update/delete.
+The public surface includes status/capability discovery, project metadata, secret metadata, value-blind file/env delivery, value-blind generated-secret creation, protected-file secret create/update, exact secret delete, and guarded project create/update/delete.
 
 See [`docs/tools.md`](docs/tools.md) for the complete tool contract and capability flags.
 
