@@ -4,7 +4,7 @@ import re
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class StrictModel(BaseModel):
@@ -47,6 +47,31 @@ class SecretWriteEnvFileInput(ProfileInput):
             if not isinstance(identifier, str) or not identifier.strip() or len(identifier) > 512:
                 raise ValueError(f"Secret identifier for {key} must be a non-empty string up to 512 characters")
         return value
+
+
+class SecretGenerateInput(ProfileInput):
+    project_id: UUID
+    key: str = Field(min_length=1, max_length=256)
+    length: int = Field(default=32, ge=5, le=128)
+    uppercase: bool = True
+    lowercase: bool = True
+    digits: bool = True
+    special: bool = True
+    min_digits: int = Field(default=1, ge=0, le=128)
+    min_special: int = Field(default=1, ge=0, le=128)
+    avoid_ambiguous: bool = True
+
+    @model_validator(mode="after")
+    def validate_policy(self) -> "SecretGenerateInput":
+        if not any((self.uppercase, self.lowercase, self.digits, self.special)):
+            raise ValueError("At least one character class must be enabled")
+        if self.min_digits and not self.digits:
+            raise ValueError("min_digits requires digits to be enabled")
+        if self.min_special and not self.special:
+            raise ValueError("min_special requires special characters to be enabled")
+        if self.min_digits + self.min_special > self.length:
+            raise ValueError("Minimum character counts exceed password length")
+        return self
 
 
 class SecretCreateFromFileInput(ProfileInput):

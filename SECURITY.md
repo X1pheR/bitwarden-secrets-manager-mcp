@@ -16,8 +16,9 @@ This server is designed so secret values can be used internally for approved ope
 
 - access tokens are read from private local files;
 - secret values never belong in ordinary MCP tool arguments;
+- generated secret values are produced only inside the server with a cryptographically secure random source and are sent directly to the typed Bitwarden create operation;
 - secret values and notes are excluded from MCP responses;
-- protected secret create/update imports accept only private regular files under configured input directories;
+- protected secret create/update imports accept only private regular files under configured input directories; the dedicated generated-secret create path requires the same default-off `allow_secret_create` capability and never creates a plaintext staging file;
 - delivery targets are constrained to configured output directories and replaced atomically;
 - administrative secret/project capabilities are disabled by default per profile;
 - deletes are single-resource operations with exact expected metadata and explicit confirmation;
