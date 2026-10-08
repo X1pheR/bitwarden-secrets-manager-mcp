@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "name": "Bitwarden Secrets Manager MCP",
+  "category": "Identity & Resilience",
+  "kind": "mcp-server"
+}
