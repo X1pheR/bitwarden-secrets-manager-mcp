@@ -19,6 +19,7 @@ from .models import (
     ProjectUpdateInput,
     SecretCreateFromFileInput,
     SecretDeleteInput,
+    SecretGenerateInput,
     SecretGetInput,
     SecretListInput,
     SecretUpdateFromFileInput,
@@ -123,6 +124,12 @@ async def list_tools() -> list[types.Tool]:
             idempotent=True,
         ),
         _tool(
+            "bitwarden_secret_generate",
+            "Generate a cryptographically secure password and create exactly one Bitwarden Secrets Manager secret without returning the generated value. Uses the profile's secret-create capability, which is disabled by default.",
+            SecretGenerateInput,
+            read_only=False,
+        ),
+        _tool(
             "bitwarden_secret_create_from_file",
             "Create exactly one secret from a protected approved server-side source file. The profile capability is disabled by default and the value never passes through MCP arguments or responses.",
             SecretCreateFromFileInput,
@@ -202,6 +209,21 @@ async def call_tool(name: str, arguments: Any) -> Sequence[types.TextContent | t
         elif name == "bitwarden_secret_write_env_file":
             args = _validate(SecretWriteEnvFileInput, arguments)
             result = service.secret_write_env_file(args.profile, args.target_path, args.secrets, str(args.project_id) if args.project_id else None)
+        elif name == "bitwarden_secret_generate":
+            args = _validate(SecretGenerateInput, arguments)
+            result = service.secret_generate(
+                args.profile,
+                str(args.project_id),
+                args.key,
+                length=args.length,
+                uppercase=args.uppercase,
+                lowercase=args.lowercase,
+                digits=args.digits,
+                special=args.special,
+                min_digits=args.min_digits,
+                min_special=args.min_special,
+                avoid_ambiguous=args.avoid_ambiguous,
+            )
         elif name == "bitwarden_secret_create_from_file":
             args = _validate(SecretCreateFromFileInput, arguments)
             result = service.secret_create_from_file(args.profile, str(args.project_id), args.key, args.source_path)

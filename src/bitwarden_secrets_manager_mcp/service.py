@@ -5,6 +5,7 @@ from typing import Any
 
 from .config import ProfileSettings, Settings
 from .delivery import atomic_write, env_payload
+from .generator import generate_password
 from .provider import SdkProvider
 from .sources import read_secret_source
 
@@ -126,6 +127,53 @@ class BitwardenSecretsManagerService:
             "profile": profile.name,
             "keys": sorted(secrets),
             "secretCount": len(secrets),
+        }
+
+    def secret_generate(
+        self,
+        profile_name: str | None,
+        project_id: str,
+        key: str,
+        *,
+        length: int = 32,
+        uppercase: bool = True,
+        lowercase: bool = True,
+        digits: bool = True,
+        special: bool = True,
+        min_digits: int = 1,
+        min_special: int = 1,
+        avoid_ambiguous: bool = True,
+    ) -> dict[str, Any]:
+        profile = self.settings.select_mutation_profile(profile_name, "secret_create")
+        value = generate_password(
+            length=length,
+            uppercase=uppercase,
+            lowercase=lowercase,
+            digits=digits,
+            special=special,
+            min_digits=min_digits,
+            min_special=min_special,
+            avoid_ambiguous=avoid_ambiguous,
+        )
+        try:
+            metadata = self._provider(profile).create_secret(project_id, key, value)
+        finally:
+            value = ""
+        return {
+            "created": True,
+            "generated": True,
+            "secret": metadata,
+            "profile": profile.name,
+            "policy": {
+                "length": length,
+                "uppercase": uppercase,
+                "lowercase": lowercase,
+                "digits": digits,
+                "special": special,
+                "minDigits": min_digits,
+                "minSpecial": min_special,
+                "avoidAmbiguous": avoid_ambiguous,
+            },
         }
 
     def secret_create_from_file(self, profile_name: str | None, project_id: str, key: str, source_path: str) -> dict[str, Any]:

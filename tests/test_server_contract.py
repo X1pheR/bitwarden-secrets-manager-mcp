@@ -15,6 +15,7 @@ EXPECTED_TOOLS = {
     "bitwarden_secret_get",
     "bitwarden_secret_write_file",
     "bitwarden_secret_write_env_file",
+    "bitwarden_secret_generate",
     "bitwarden_secret_create_from_file",
     "bitwarden_secret_update_from_file",
     "bitwarden_secret_delete",
@@ -51,6 +52,15 @@ def test_no_tool_schema_accepts_plaintext_secret_value_or_arbitrary_command() ->
     deletes = {tool.name: tool for tool in tools if tool.name.endswith("_delete")}
     assert deletes["bitwarden_secret_delete"].inputSchema["properties"]["confirm"].get("const") is True
     assert deletes["bitwarden_project_delete"].inputSchema["properties"]["confirm"].get("const") is True
+
+
+def test_generator_schema_exposes_policy_not_plaintext() -> None:
+    tools = {tool.name: tool for tool in asyncio.run(server.list_tools())}
+    schema = tools["bitwarden_secret_generate"].inputSchema["properties"]
+    assert set(("length", "uppercase", "lowercase", "digits", "special", "min_digits", "min_special", "avoid_ambiguous")) <= set(schema)
+    assert "value" not in schema and "secret_value" not in schema
+    assert schema["length"]["minimum"] == 5
+    assert schema["length"]["maximum"] == 128
 
 
 def test_secret_get_description_explicitly_excludes_values() -> None:

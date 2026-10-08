@@ -4,8 +4,11 @@ This file records user-visible changes to `bitwarden-secrets-manager-mcp`. Secur
 
 ## Unreleased
 
+## 0.2.0 - 2026-09-05
+
+- Added value-blind cryptographically secure generated-secret creation with Bitwarden-like password policy controls.
 - Added public OpenSSF Scorecard reporting and protected-branch repository controls.
-- Future releases publish signed GitHub/Sigstore build provenance alongside checksums and reproducible package artifacts.
+- Release artifacts now include signed GitHub/Sigstore build provenance alongside checksums and reproducible package artifacts.
 - Added explicit contribution and private vulnerability-reporting routes.
 
 ## 0.1.0 - 2026-08-16

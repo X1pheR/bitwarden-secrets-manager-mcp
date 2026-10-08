@@ -29,6 +29,6 @@ uv pip install --python "$work_dir/install/bin/python" "$wheel" >/dev/null
 "$work_dir/install/bin/python" - <<'PY'
 import importlib.metadata
 import bitwarden_secrets_manager_mcp
-assert importlib.metadata.version("bitwarden-secrets-manager-mcp") == "0.1.0"
+assert importlib.metadata.version("bitwarden-secrets-manager-mcp") == "0.2.0"
 assert callable(bitwarden_secrets_manager_mcp.main)
 PY

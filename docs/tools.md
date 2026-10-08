@@ -42,6 +42,20 @@ These profile capabilities are **disabled by default**:
 - `allow_secret_update`
 - `allow_secret_delete`
 
+### `bitwarden_secret_generate`
+
+Generates a password inside the MCP server and creates exactly one BSM secret directly. The generated value never appears in MCP arguments, responses, logs, temporary files, or SQLite state. This operation uses the existing `allow_secret_create` capability.
+
+Password policy inputs are intentionally Bitwarden-like:
+
+- `length`: 5-128 characters, default 32;
+- `uppercase`, `lowercase`, `digits`, `special`: enable character classes;
+- `min_digits`, `min_special`: minimum counts for enabled numeric/special classes;
+- `avoid_ambiguous`: defaults to true and excludes `I`, `O`, `l`, `0`, and `1`;
+- special characters use the bounded set `!@#$%^&*`.
+
+Generation uses Python's cryptographic `secrets` module for character selection and an unbiased Fisher-Yates shuffle. Impossible policies fail closed before any Bitwarden mutation occurs.
+
 ### `bitwarden_secret_create_from_file`
 
 Creates exactly one secret. Arguments contain `profile`, `project_id`, `key`, and `source_path`; the secret value is read only from the private allowlisted server-side source file.
